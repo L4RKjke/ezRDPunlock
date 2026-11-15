@@ -1,0 +1,6 @@
+PyQt6
+pyserial
+pyusb
+libusb-package
+pyinstaller
+

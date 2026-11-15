@@ -1,0 +1,10 @@
+{
+  "app_name": "ezRDPU",
+  "version": "1.0.0",
+  "entry_script": "unprotect_gui.py",
+  "icon": "app.ico",
+  "data_files": [],
+  "hidden_imports": [],
+  "collect_all": ["libusb_package"],
+  "release_text": "## ezRDPU v1.0.0\n\n- Снятие защиты от чтения (RDP1 -> RDP0)\n- Полное стирание основной Flash\n- Тёмный интерфейс, журнал операций\n- Автоматический перезапуск цикла после завершения операции"
+}

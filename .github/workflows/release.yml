@@ -1,0 +1,81 @@
+name: Build and Release
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "build_config.json"
+      - "**.py"
+      - "requirements.txt"
+      - ".github/workflows/release.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Read build_config.json
+        id: cfg
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          $cfg = Get-Content build_config.json -Raw -Encoding UTF8 | ConvertFrom-Json
+          $tag = "v$($cfg.version)"
+
+          Add-Content -Path $env:GITHUB_OUTPUT -Value "tag=$tag" -Encoding utf8
+          Add-Content -Path $env:GITHUB_OUTPUT -Value "app=$($cfg.app_name)" -Encoding utf8
+          Add-Content -Path $env:GITHUB_OUTPUT -Value "version=$($cfg.version)" -Encoding utf8
+
+          [System.IO.File]::WriteAllText(
+              (Join-Path $PWD "release_notes.md"),
+              [string]$cfg.release_text,
+              [System.Text.UTF8Encoding]::new($false)
+          )
+
+          gh release view $tag *> $null
+          if ($LASTEXITCODE -eq 0) {
+              Write-Host "Релиз $tag уже существует, сборка пропущена. Увеличьте version в build_config.json."
+              Add-Content -Path $env:GITHUB_OUTPUT -Value "skip=true" -Encoding utf8
+          } else {
+              Add-Content -Path $env:GITHUB_OUTPUT -Value "skip=false" -Encoding utf8
+          }
+
+      - name: Install dependencies
+        if: steps.cfg.outputs.skip == 'false'
+        shell: pwsh
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Build EXE
+        if: steps.cfg.outputs.skip == 'false'
+        shell: pwsh
+        run: python build.py
+
+      - name: Create GitHub Release
+        if: steps.cfg.outputs.skip == 'false'
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ steps.cfg.outputs.tag }}
+          APP: ${{ steps.cfg.outputs.app }}
+          VERSION: ${{ steps.cfg.outputs.version }}
+        run: |
+          $exe = "dist/$($env:APP)_v$($env:VERSION).exe"
+          gh release create $env:TAG $exe `
+            --title "$($env:APP) $($env:TAG)" `
+            --notes-file release_notes.md `
+            --target $env:GITHUB_SHA
