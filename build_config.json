@@ -1,10 +1,5 @@
 {
-  "app_name": "ezRDPU",
+  "app_name": "FC Unprotect",
   "version": "1.0.0",
-  "entry_script": "unprotect_gui.py",
-  "icon": "app.ico",
-  "data_files": [],
-  "hidden_imports": [],
-  "collect_all": ["libusb_package"],
-  "release_text": "## ezRDPU v1.0.1\n\n- unlock RDP1 (RDP1 -> RDP0)\n- memory clear"
+  "description": "- Стабильный перевод в DFU\n- Цикл работы: ожидание платы, операция, отключение, новый цикл"
 }

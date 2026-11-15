@@ -1,29 +1,29 @@
 @echo off
 chcp 65001 >nul
-title Betaflight FC - снятие защиты от чтения
+setlocal
 cd /d "%~dp0"
+set PYTHONIOENCODING=utf-8
+title FC DFU Unprotect
 
-where python >nul 2>nul
+where python >nul 2>&1 || (echo [ОШИБКА] Python не найден в PATH & pause & exit /b 1)
+
+python -c "import serial, usb.core" >nul 2>&1
 if errorlevel 1 (
-    echo Python не найден. Установите Python 3 и отметьте "Add Python to PATH".
-    pause
-    exit /b 1
+    echo Установка зависимостей...
+    python -m pip install -r requirements.txt || (echo [ОШИБКА] pip & pause & exit /b 1)
 )
 
-python -m pip install -q -r requirements.txt
-if errorlevel 1 (
-    echo Не удалось установить зависимости.
-    pause
-    exit /b 1
-)
+echo Выберите режим:
+echo   1 - Снятие защиты (unprotect)
+echo   2 - Полное стирание (erase)
+choice /c 12 /n /m "Режим [1/2]: "
+if errorlevel 2 (set "MODE=erase") else (set "MODE=unprotect")
 
 echo.
-echo  1 - Снять защиту от чтения (RDP1 - RDP0, стирание основной Flash)
-echo  2 - Полное стирание основной Flash
+echo Запуск, режим %MODE%. Для выхода нажмите Ctrl+C.
 echo.
-choice /c 12 /n /m "Выберите режим: "
-if errorlevel 2 (set MODE=erase) else (set MODE=unprotect)
-
 python fc_unprotect.py --mode %MODE%
+
 echo.
+echo Программа завершена.
 pause

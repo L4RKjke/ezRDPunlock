@@ -3,37 +3,32 @@ chcp 65001 >nul
 setlocal
 cd /d "%~dp0"
 
-where python >nul 2>&1
-if errorlevel 1 (
-    echo ОШИБКА: Python не найден в PATH.
-    pause
-    exit /b 1
-)
+echo [1/4] Установка зависимостей...
+python -m pip install -r requirements.txt pyinstaller || goto :error
 
-if not exist ".venv\Scripts\python.exe" (
-    echo Создание виртуального окружения...
-    python -m venv .venv
-    if errorlevel 1 goto :fail
-)
+echo [2/4] Чтение версии из build_config.json...
+for /f "usebackq delims=" %%V in (`python -c "import json; print(json.load(open('build_config.json', encoding='utf-8'))['version'])"`) do set "APP_VER=%%V"
+if not defined APP_VER goto :error
 
-call ".venv\Scripts\activate.bat"
+echo [3/4] Сборка FcUnprotect_%APP_VER%.exe ...
+python -m PyInstaller --noconfirm --clean --onefile --windowed ^
+    --name "FcUnprotect_%APP_VER%" ^
+    --add-data "style.qss;." ^
+    --add-data "build_config.json;." ^
+    --collect-all libusb_package ^
+    gui.py || goto :error
 
-echo Установка зависимостей...
-python -m pip install --upgrade pip >nul
-pip install -r requirements.txt
-if errorlevel 1 goto :fail
-
-echo Сборка EXE...
-python build.py
-if errorlevel 1 goto :fail
+echo [4/4] Очистка временных файлов...
+rmdir /s /q build 2>nul
+del /q "FcUnprotect_%APP_VER%.spec" 2>nul
 
 echo.
-echo Сборка завершена. Файл находится в папке dist.
+echo Готово: dist\FcUnprotect_%APP_VER%.exe
 pause
 exit /b 0
 
-:fail
+:error
 echo.
-echo ОШИБКА: сборка прервана.
+echo ОШИБКА СБОРКИ
 pause
 exit /b 1

@@ -1,0 +1,66 @@
+name: Build and Release
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Read config and check version change
+        id: cfg
+        env:
+          BASE_SHA: ${{ github.event.before }}
+        run: python scripts/read_config.py
+
+      - name: Install dependencies
+        if: steps.cfg.outputs.changed == 'true'
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt pyinstaller
+
+      - name: Build exe
+        if: steps.cfg.outputs.changed == 'true'
+        run: |
+          VERSION="${{ steps.cfg.outputs.version }}"
+          python -m PyInstaller --noconfirm --clean --onefile --windowed \
+            --name "FcUnprotect_${VERSION}" \
+            --add-data "style.qss;." \
+            --add-data "build_config.json;." \
+            --collect-all libusb_package \
+            gui.py
+
+      - name: Publish release
+        if: steps.cfg.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          VERSION="${{ steps.cfg.outputs.version }}"
+          TAG="v${VERSION}"
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "Релиз $TAG уже существует, пропуск"
+            exit 0
+          fi
+          gh release create "$TAG" "dist/FcUnprotect_${VERSION}.exe" \
+            --title "$TAG" \
+            --notes-file release_notes.md \
+            --target "$GITHUB_SHA"
