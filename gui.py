@@ -4,6 +4,8 @@ import json
 import os
 import sys
 import threading
+from PyQt6.QtGui import QIcon
+
 
 from PyQt6.QtCore import QObject, Qt, QThread, pyqtSignal
 from PyQt6.QtWidgets import (
@@ -74,6 +76,7 @@ class MainWindow(QMainWindow):
     def __init__(self, cfg):
         super().__init__()
         self.setWindowTitle(f"{cfg['app_name']} {cfg['version']}")
+        self.setWindowIcon(QIcon(resource_path("icon.ico")))
         self.resize(720, 520)
         self._thread = None
         self._worker = None
@@ -224,7 +227,8 @@ class MainWindow(QMainWindow):
         self._worker = None
         self._thread = None
         self._stop_event = None
-        self.mode_box.setEnabled(True)
+        for btn in self.mode_group.buttons():
+            btn.setEnabled(True)
         self.toggle_btn.setEnabled(True)
         self.toggle_btn.setText("Запуск")
         set_variant(self.toggle_btn, "primary")

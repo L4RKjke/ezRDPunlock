@@ -7,8 +7,9 @@ import threading
 
 from PyQt6.QtCore import QObject, Qt, QThread, pyqtSignal
 from PyQt6.QtWidgets import (
-    QApplication, QComboBox, QHBoxLayout, QLabel, QMainWindow, QMessageBox,
-    QPlainTextEdit, QProgressBar, QPushButton, QVBoxLayout, QWidget,
+    QApplication, QButtonGroup, QFrame, QHBoxLayout, QLabel, QMainWindow,
+    QMessageBox, QPlainTextEdit, QProgressBar, QPushButton, QVBoxLayout,
+    QWidget,
 )
 
 from fc_core import FcTool
@@ -96,16 +97,41 @@ class MainWindow(QMainWindow):
         layout.addLayout(header)
 
         controls = QHBoxLayout()
-        self.mode_box = QComboBox()
+
+        # Сегментированный переключатель режима
+        self.mode_frame = QFrame()
+        self.mode_frame.setObjectName("segmented")
+        seg_layout = QHBoxLayout(self.mode_frame)
+        seg_layout.setContentsMargins(3, 3, 3, 3)
+        seg_layout.setSpacing(0)
+
+        self.mode_group = QButtonGroup(self)
+        self.mode_group.setExclusive(True)
         for key, text in MODES:
-            self.mode_box.addItem(text, key)
+            btn = QPushButton(text)
+            btn.setObjectName("segBtn")
+            btn.setCheckable(True)
+            btn.setCursor(Qt.CursorShape.PointingHandCursor)
+            btn.setProperty("mode", key)
+            self.mode_group.addButton(btn)
+            seg_layout.addWidget(btn)
+
+        # По умолчанию — полное стирание
+        self.default_mode = "erase"
+        for btn in self.mode_group.buttons():
+            if btn.property("mode") == self.default_mode:
+                btn.setChecked(True)
+
         self.toggle_btn = QPushButton("Запуск")
         self.toggle_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         set_variant(self.toggle_btn, "primary")
         self.toggle_btn.clicked.connect(self.on_toggle)
-        controls.addWidget(self.mode_box, 1)
+
+        controls.addWidget(self.mode_frame, 1)
         controls.addWidget(self.toggle_btn)
         layout.addLayout(controls)
+
+
 
         self.status_label = QLabel(STATE_TEXT["idle"])
         self.status_label.setObjectName("status")
@@ -125,6 +151,11 @@ class MainWindow(QMainWindow):
 
     # ---------- управление ----------
 
+    def current_mode(self):
+        btn = self.mode_group.checkedButton()
+        return btn.property("mode") if btn else self.default_mode
+
+
     def on_toggle(self):
         if self._worker is None:
             self.start()
@@ -132,7 +163,7 @@ class MainWindow(QMainWindow):
             self.stop()
 
     def start(self):
-        mode = self.mode_box.currentData()
+        mode = self.current_mode()
         if mode == "erase":
             answer = QMessageBox.question(
                 self, "Подтверждение",
@@ -158,7 +189,9 @@ class MainWindow(QMainWindow):
 
         self._thread.start()
 
-        self.mode_box.setEnabled(False)
+        for btn in self.mode_group.buttons():
+            btn.setEnabled(False)
+
         self.toggle_btn.setText("Стоп")
         set_variant(self.toggle_btn, "danger")
 
@@ -223,5 +256,5 @@ if __name__ == "__main__":
 
 
 ТЗ
-замени в этом скрипте переключение модов с выбора из на переключатель (Снятие защиты (unprotect)", "Полное стирание (erase))
-По умолчанию полное стирание
+1) Для программы нужно добавить иконку icon.icon для окна программы и файла .exe
+2) обновить build.yml файл, чтобы иконка попала в сборку

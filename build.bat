@@ -13,6 +13,8 @@ if not defined APP_VER goto :error
 echo [3/4] Сборка FcUnprotect_%APP_VER%.exe ...
 python -m PyInstaller --noconfirm --clean --onefile --windowed ^
     --name "FcUnprotect_%APP_VER%" ^
+    --icon icon.ico ^
+    --add-data "icon.ico;." ^
     --add-data "style.qss;." ^
     --add-data "build_config.json;." ^
     --collect-all libusb_package ^

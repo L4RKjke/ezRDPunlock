@@ -39,14 +39,16 @@ CMD_MASS_ERASE = 0x41
 POST_UNPROTECT_WAIT_MS = 20000   # дополнительное ожидание, как в configurator
 
 # Параметры перехода в DFU
-DFU_ENTRY_ATTEMPTS = 5           # количество попыток отправки 'bl'
+DFU_ENTRY_ATTEMPTS = 1           # количество попыток отправки 'bl'
 CDC_WAIT_S = 5                   # ожидание появления CDC-порта перед попыткой
 DFU_WAIT_AFTER_BL_S = 8          # ожидание появления DFU после 'bl'
-CLI_BANNER = b"CLI"              # Betaflight печатает "Entering CLI Mode"
 
 DISCONNECT_STABLE_S = 1.5        # устройство должно отсутствовать столько секунд
 POLL_S = 0.3
 
+BAUDRATE = 115200
+MSP_FC_VARIANT = 2
+CLI_BANNER = b"Entering CLI"     # Betaflight печатает "Entering CLI Mode"
 
 class DfuError(Exception):
     pass
@@ -80,25 +82,106 @@ def find_any():
         return "cdc", port
     return None
 
+def read_exact(port, size, deadline):
+    result = bytearray()
+
+    while len(result) < size and time.monotonic() < deadline:
+        chunk = port.read(size - len(result))
+        if chunk:
+            result.extend(chunk)
+
+    return bytes(result)
+
+
+def get_fc_variant(port):
+    """Запрашивает идентификатор прошивки через MSP v1."""
+    port.reset_input_buffer()
+
+    # MSP_FC_VARIANT без данных:
+    # заголовок + длина + команда + XOR-контрольная сумма.
+    port.write(b"$M<" + bytes([0, MSP_FC_VARIANT, MSP_FC_VARIANT]))
+    port.flush()
+
+    deadline = time.monotonic() + 2.0
+    header = bytearray()
+
+    while time.monotonic() < deadline:
+        byte = port.read(1)
+        if not byte:
+            continue
+
+        header.extend(byte)
+        if len(header) > 3:
+            del header[0]
+
+        if bytes(header) != b"$M>":
+            continue
+
+        metadata = read_exact(port, 2, deadline)
+        if len(metadata) != 2:
+            return None
+
+        size, command = metadata
+        body = read_exact(port, size + 1, deadline)
+        if len(body) != size + 1:
+            return None
+
+        payload = body[:-1]
+        checksum = size ^ command
+
+        for value in payload:
+            checksum ^= value
+
+        if checksum != body[-1]:
+            return None
+
+        if command == MSP_FC_VARIANT:
+            return payload.decode("ascii", errors="replace")
+
+        header.clear()
+
+    return None
+
 
 def send_bl(port, log):
-    """Входит в CLI Betaflight и отправляет 'bl'. Возвращает True, если команда отправлена."""
+    """Переводит Betaflight в DFU по схеме из первого фрагмента.
+    Возвращает True, если команда 'bl' отправлена."""
     try:
-        with serial.Serial(port, 115200, timeout=0.2, write_timeout=1,
-                           dsrdtr=False, rtscts=False) as s:
+        with serial.Serial(port=None, baudrate=BAUDRATE,
+                           timeout=0.2, write_timeout=2.0) as s:
+            # DTR/RTS сбрасываются до открытия порта, чтобы не перезагрузить плату
+            s.dtr = False
+            s.rts = False
+            s.port = port
+            s.open()
+
+            time.sleep(0.3)
+
+            variant = get_fc_variant(s)
+            if variant != "BTFL":
+                log(f"Порт {port}: прошивка не Betaflight (ответ: {variant})")
+                return False
+
+            # Вход в CLI
             s.reset_input_buffer()
-            s.write(b"#\r\n")
+            s.write(b"#")
             s.flush()
 
-            # Ждем подтверждение входа в CLI
-            buf = b""
-            end = time.monotonic() + 2.0
-            while time.monotonic() < end and CLI_BANNER not in buf:
-                buf += s.read(256)
-            if CLI_BANNER not in buf:
-                log("CLI не подтвердил вход, все равно отправляю 'bl'")
+            response = bytearray()
+            deadline = time.monotonic() + 3.0
+            while time.monotonic() < deadline:
+                chunk = s.read(s.in_waiting or 1)
+                if chunk:
+                    response.extend(chunk)
 
-            s.reset_input_buffer()
+                if CLI_BANNER in response and response.rstrip().endswith(b"#"):
+                    break
+            else:
+                log("Не удалось подтвердить вход в CLI. "
+                    "Проверьте, что контроллер разоружён и Configurator закрыт.")
+                return False
+
+            log("CLI доступен, отправляю 'bl'...")
             s.write(b"bl\r\n")
             s.flush()
             time.sleep(0.3)

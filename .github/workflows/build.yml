@@ -44,6 +44,8 @@ jobs:
           VERSION="${{ steps.cfg.outputs.version }}"
           python -m PyInstaller --noconfirm --clean --onefile --windowed \
             --name "FcUnprotect_${VERSION}" \
+            --icon icon.ico \
+            --add-data "icon.ico;." \
             --add-data "style.qss;." \
             --add-data "build_config.json;." \
             --collect-all libusb_package \

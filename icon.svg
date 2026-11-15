@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#1e2a38"/>
+      <stop offset="1" stop-color="#0b1118"/>
+    </linearGradient>
+    <linearGradient id="bolt" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ffd166"/>
+      <stop offset="1" stop-color="#ff9f1c"/>
+    </linearGradient>
+  </defs>
+
+  <!-- фон -->
+  <rect width="512" height="512" rx="96" fill="url(#bg)"/>
+
+  <!-- молния (признак прошивки) -->
+  <path d="M 262 62 L 218 136 L 248 136 L 232 200 L 296 116 L 264 116 L 280 62 Z"
+        fill="url(#bolt)"/>
+
+  <!-- плата -->
+  <rect x="96" y="216" width="320" height="200" rx="24" fill="#1f7a4d"/>
+
+  <!-- монтажные отверстия -->
+  <circle cx="120" cy="240" r="9" fill="#0b1118"/>
+  <circle cx="392" cy="240" r="9" fill="#0b1118"/>
+  <circle cx="120" cy="392" r="9" fill="#0b1118"/>
+  <circle cx="392" cy="392" r="9" fill="#0b1118"/>
+
+  <!-- выводы чипа -->
+  <g fill="#c0c6cf">
+    <rect x="204" y="282" width="8" height="12"/>
+    <rect x="224" y="282" width="8" height="12"/>
+    <rect x="244" y="282" width="8" height="12"/>
+    <rect x="264" y="282" width="8" height="12"/>
+    <rect x="284" y="282" width="8" height="12"/>
+    <rect x="304" y="282" width="8" height="12"/>
+    <rect x="204" y="346" width="8" height="12"/>
+    <rect x="224" y="346" width="8" height="12"/>
+    <rect x="244" y="346" width="8" height="12"/>
+    <rect x="264" y="346" width="8" height="12"/>
+    <rect x="284" y="346" width="8" height="12"/>
+    <rect x="304" y="346" width="8" height="12"/>
+  </g>
+
+  <!-- чип -->
+  <rect x="196" y="294" width="120" height="52" rx="8" fill="#14171c"/>
+  <text x="256" y="331" font-family="Arial, Helvetica, sans-serif" font-size="30"
+        font-weight="bold" fill="#ff9f1c" text-anchor="middle">DFU</text>
+
+  <!-- USB-разъём -->
+  <rect x="216" y="416" width="80" height="40" rx="6" fill="#c0c6cf"/>
+  <rect x="232" y="428" width="48" height="16" rx="3" fill="#2b313a"/>
+</svg>
