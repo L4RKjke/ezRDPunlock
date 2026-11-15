@@ -1,4 +1,6 @@
-# Betaflight FC: снятие защиты от чтения (DFU)
+# ezDRPunlock: снятие защиты от чтения (DFU)
+
+[![Скачать для Windows](https://img.shields.io/badge/Скачать-для_Windows-0078D6?style=for-the-badge&logo=windows&logoColor=white)]([https://github.com/L4RKjke/ezRDPunlock/releases/latest/download/FcUnprotect_1.0.2.exe](https://github.com/L4RKjke/ezRDPunlock/releases))
 
 Утилита снимает защиту от чтения (RDP1 → RDP0) с полетного контроллера Betaflight на микроконтроллерах STM32 через загрузчик DFU. Также она может выполнить полное стирание памяти.
 
@@ -46,7 +48,3 @@
 - `build_config.json`: версия и описание релиза
 - `styles.py`: стили интерфейса (тёмная тема)
 - `.github/workflows/build.yml`: автоматическая сборка и релиз
-
-## Лицензия
-
-Укажите лицензию проекта.
