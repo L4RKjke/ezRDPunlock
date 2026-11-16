@@ -43,7 +43,7 @@ jobs:
         run: |
           VERSION="${{ steps.cfg.outputs.version }}"
           python -m PyInstaller --noconfirm --clean --onefile --windowed \
-            --name "FcUnprotect_${VERSION}" \
+            --name "ezRDP_${VERSION}" \
             --icon icon.ico \
             --add-data "icon.ico;." \
             --add-data "style.qss;." \
@@ -62,7 +62,7 @@ jobs:
             echo "Релиз $TAG уже существует, пропуск"
             exit 0
           fi
-          gh release create "$TAG" "dist/FcUnprotect_${VERSION}.exe" \
+          gh release create "$TAG" "dist/ezRDP_${VERSION}.exe" \
             --title "$TAG" \
             --notes-file release_notes.md \
             --target "$GITHUB_SHA"
