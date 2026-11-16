@@ -2,8 +2,7 @@
 
 [![Скачать для Windows](https://img.shields.io/badge/Скачать-для_Windows-0078D6?style=for-the-badge&logo=windows&logoColor=white)](https://github.com/L4RKjke/ezRDPunlock/releases/latest/download/ezRDP_1.0.5.exe)
 
-![Uploading 01a1e4a5-18b8-763a-8ab5-10246760aa8f.png…]()
-
+<img width="1672" height="941" alt="01a1e4a5-18b8-763a-8ab5-10246760aa8f" src="https://github.com/user-attachments/assets/3d0f0c35-67b0-43a2-b05f-f0b176f8a009" />
 
 Утилита снимает защиту от чтения (RDP1 → RDP0) с полетного контроллера Betaflight на микроконтроллерах STM32 через загрузчик DFU. Также она может выполнить полное стирание памяти.
 
